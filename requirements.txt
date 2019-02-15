@@ -1,0 +1,4 @@
+Flask-pymongo
+Flask-API
+requests
+

@@ -1,0 +1,49 @@
+###
+GET http://localhost:5000/lists/
+
+###
+POST http://localhost:5000/lists/
+Content-Type: application/json
+
+{
+    "title": "Sedoc"
+}
+###
+GET http://localhost:5000/lists/5c61826da878b90009390470
+
+
+###
+PUT http://localhost:5000/lists/5c61826da878b90009390470
+Content-Type: application/json
+
+{
+    "title": "Kedoc"
+}
+
+###
+DELETE  http://localhost:5000/lists/5c627f98a878b9011da1ccc6
+
+
+###################################################################################################
+
+POST http://localhost:5000/items/
+Content-Type: application/json
+
+{
+    "parent_id" : "5c62b9a8a878b9014422be2f",
+    "text": "todo action",
+    "finished_status": false
+}
+
+###
+PUT http://localhost:5000/items/5c61a627a878b9009ed8e666
+Content-Type: application/json
+
+{
+    "text": "XXXXXXXX",
+    "finished_status": false
+}
+
+###
+DELETE http://localhost:5000/items/5c62bc49a878b9014422be32
+

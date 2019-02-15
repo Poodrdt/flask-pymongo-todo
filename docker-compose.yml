@@ -1,0 +1,30 @@
+version: '3'
+
+services:
+
+  db:
+    image: mongo
+    # environment:
+      # - MONGODB_DATABASE=bd
+      # - MONGO_INITDB_DATABASE=db
+    ports:
+      - "27017:27017"
+
+  web:
+    build: .
+    volumes:
+      - .\:/app
+    restart: always
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+
+
+  #redis
+  # redis:
+  #   image: redis
+  #   environment:
+  #     - ALLOW_EMPTY_PASSWORD=yes
+  #   ports:
+  #     - "6379:6379"
