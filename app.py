@@ -1,11 +1,11 @@
-from datetime import datetime
-from flask import Flask, Response
-from flask import jsonify
-from flask import request, abort, make_response
-from flask_pymongo import PyMongo
-from bson import ObjectId, json_util
 import json
+import mimetypes
+from datetime import datetime
 
+from bson import ObjectId, json_util
+from bson.errors import InvalidId
+from flask import Flask, Response, abort, jsonify, make_response, request
+from flask_pymongo import PyMongo
 
 app = Flask(__name__)
 
@@ -18,6 +18,7 @@ def to_json(data):
     """Convert Mongo object(s) to JSON"""
     return json.dumps(data, default=json_util.default)
 
+DEFAULT_HEADER = {'Content-Type': 'application/json'}
 
 @app.errorhandler(404)
 def not_found(error):
@@ -40,7 +41,7 @@ def lists_list():
         off = int(request.args.get('offset', 0))
         results = lists.find().skip(off).limit(lim)
         json_results = list(results)
-        return to_json(json_results), 200
+        return to_json(json_results), 200, DEFAULT_HEADER
 
     elif request.method == 'POST':
         """Create a todo list
@@ -54,7 +55,7 @@ def lists_list():
         }
         list_id = lists.insert_one(new_list).inserted_id
         response = lists.find_one_or_404({"_id": list_id})
-        return to_json(response), 201
+        return to_json(response), 201, DEFAULT_HEADER
 
 
 @app.route('/lists/<id>', methods=['GET', 'PUT', 'DELETE'])
@@ -65,7 +66,7 @@ def lists_detail(id):
         GET /lists/123456
         """
         result = lists.find_one({"_id": ObjectId(id)})
-        return to_json(result), 200
+        return to_json(result), 200, DEFAULT_HEADER
 
     elif request.method == 'PUT':
         """Edit specific todo list
@@ -81,7 +82,7 @@ def lists_detail(id):
             upsert=False,
             new=True
         )
-        return to_json(result), 200
+        return to_json(result), 200, DEFAULT_HEADER
 
     elif request.method == 'DELETE':
         """Edit specific todo list
@@ -92,7 +93,7 @@ def lists_detail(id):
             result = {'message' : 'record deleted'}
         else: 
             result = {'message' : 'no record found'}
-        return to_json(result)
+        return to_json(result), 200, DEFAULT_HEADER
         
 ################################################################
 
@@ -130,7 +131,7 @@ def items_list():
         upsert=False,
         new=True
     )
-    return to_json(result), 201
+    return to_json(result), 201, DEFAULT_HEADER
 
 
 @app.route('/items/<id>', methods=['PUT', 'DELETE'])
@@ -165,27 +166,30 @@ def items_detail(id):
             upsert=False,
             new=True
         )
-        return to_json(response), 200
+        return to_json(response), 200, DEFAULT_HEADER
 
     elif request.method == 'DELETE':
         """Delete specific todo item
         DELETE /item/123456
         """
-        response = lists.update_one(
-            {},
-            {
-            "$pull":{
-                'items':{
-                    '_id': ObjectId(id)}
-                }
-            },
-            upsert=False
-        )
+        try:
+            response = lists.update_one(
+                {},
+                {
+                "$pull":{
+                    'items':{
+                        '_id': ObjectId(id)}
+                    }
+                },
+                upsert=False
+            )
+        except InvalidId as e:
+            return to_json({'error': str(e)}), 200, DEFAULT_HEADER
         if response.modified_count == 1:
             result = {'message' : 'record deleted'}
         else: 
             result = {'message' : 'no record found'}
-        return to_json(result)
+        return to_json(result), 200, DEFAULT_HEADER
 
 
 if __name__ == "__main__":
